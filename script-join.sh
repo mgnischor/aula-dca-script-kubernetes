@@ -54,7 +54,7 @@ on_error() {
 trap 'on_error $LINENO "$BASH_COMMAND"' ERR
 
 # ── Variáveis configuráveis ───────────────────────────────────────────────────
-K8S_VERSION="1.31"
+K8S_VERSION="1.35"
 CONTAINERD_SOCK="unix:///var/run/containerd/containerd.sock"
 MAX_RETRIES=3
 ENDPOINT=""
