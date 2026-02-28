@@ -2,7 +2,7 @@
 # =============================================================================
 # Kubernetes Single-Node Setup (kubeadm) + Helm — Ubuntu Server
 # Testado em: Ubuntu 22.04 LTS / 24.04 LTS
-# Uso: sudo bash k8s-setup.sh
+# Uso: sudo bash script-deploy.sh
 #
 # Este script detecta e corrige automaticamente os problemas mais comuns:
 #   • CRI plugin desabilitado no containerd
