@@ -57,7 +57,7 @@ trap 'on_error $LINENO "$BASH_COMMAND"' ERR
 K8S_VERSION="1.36.2"         # Versão minor do Kubernetes
 POD_CIDR="192.168.16.0/16"   # CIDR dos pods (Flannel padrão)
 CNI_PLUGIN="flannel"         # flannel | calico
-HELM_VERSION="4.0.0"         # Versão do Helm
+HELM_VERSION="4.2.3"         # Versão do Helm
 NODE_NAME="${HOSTNAME}"
 CONTAINERD_SOCK="unix:///var/run/containerd/containerd.sock"
 KUBECONFIG_PATH="/etc/kubernetes/admin.conf"
