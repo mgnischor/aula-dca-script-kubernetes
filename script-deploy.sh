@@ -321,21 +321,34 @@ if [[ -f /sys/fs/cgroup/cgroup.controllers ]] ; then
 
     # Garante accounting habilitado no systemd para cgroup v2
     local cfg="/etc/systemd/system.conf.d/k8s-cgroup.conf"
+    local need_update=0
+
     if [[ ! -f "$cfg" ]] ; then
-    fix "Habilitando accounting do systemd para cgroup v2"
-    mkdir -p /etc/systemd/system.conf.d/
-    cat > "$cfg" << 'EOF'
+        need_update=1
+    else
+        for entry in DefaultCPUAccounting=yes DefaultMemoryAccounting=yes DefaultTasksAccounting=yes ; do
+            if ! grep -q "^${entry}$" "$cfg" 2>/dev/null ; then
+                need_update=1
+                break
+            fi
+        done
+    fi
+
+    if [[ $need_update -eq 1 ]] ; then
+        fix "Habilitando accounting do systemd para cgroup v2"
+        mkdir -p /etc/systemd/system.conf.d/
+        cat > "$cfg" << 'EOF'
 [Manager]
 DefaultCPUAccounting=yes
 DefaultMemoryAccounting=yes
 DefaultTasksAccounting=yes
 EOF
-    systemctl daemon-reexec >>"$LOG_FILE" 2>&1 || true
-fi
-success "Cgroup v2 configurado"
+        systemctl daemon-reexec >>"$LOG_FILE" 2>&1 || true
+    fi
+    success "Cgroup v2 configurado"
 else
-info "Cgroup v1 detectado"
-success "Cgroup v1 — configuração padrão compatível"
+    info "Cgroup v1 detectado"
+    success "Cgroup v1 — configuração padrão compatível"
 fi
 }
 
@@ -352,12 +365,12 @@ if [[ -n "$iface" ]] ; then
 fi
 
 if [[ -z "$NODE_IP" ]] ; then
-    NODE_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "")
+    NODE_IP=$(hostname -I 2>/dev/null | awk '{for (i=1; i<=NF; i++) if ($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) { print $i; exit }}' || echo "")
 fi
 
 if [[ -n "$NODE_IP" ]] ; then
     info "IP do node detectado: $NODE_IP (interface: ${iface:-auto})"
-    else
+else
     warn "Não foi possível detectar o IP do node — kubeadm escolherá automaticamente"
 fi
 }
@@ -808,12 +821,9 @@ info "CNI pode demorar 60–120s para inicializar..."
 TIMEOUT=240 ; INTERVAL=5 ; ELAPSED=0
 
 while true ; do
-    STATUS=$(kubectl get node "$NODE_NAME" \
-    --no-headers \
-    -o custom-columns=STATUS:.status.conditions[-1].type \
-    2>/dev/null || echo "Aguardando")
+    STATUS=$(kubectl get node "$NODE_NAME" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Unknown")
 
-    if [[ "$STATUS" == "Ready" ]] ; then
+    if [[ "$STATUS" == "True" ]] ; then
         echo ""
         success "Node '${NODE_NAME}' está Ready!"
         break
